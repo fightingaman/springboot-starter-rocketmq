@@ -37,7 +37,7 @@ public class ConsumerListen {
 			System.out.println("bl"+tUserService.saveTUser(tUser));
 		} catch (Exception e) {
 			e.printStackTrace();
-			if (event.getMessageExt().getReconsumeTimes() <= 1) {// 重复消费3次
+			if (event.getMessageExt().getReconsumeTimes() <= 1) {// 重复消费1次
 				try {
 					consumer.sendMessageBack(event.getMessageExt(), 1);
 				} catch (RemotingException | MQBrokerException | InterruptedException | MQClientException e1) {
@@ -50,9 +50,8 @@ public class ConsumerListen {
 		}
 	}
 	@Async
-	@EventListener(condition = "#event.topic=='TopicTest1'")
+	@EventListener(condition = "#event.topic=='pro'")
 	public void normalListen(RocketMqEvent event) {
-		System.out.println("通用topic监听");
 		DefaultMQPushConsumer consumer = event.getConsumer();
 		try {
 			System.out.println("tag筛选：" + new String(event.getMessageExt().getBody(),"utf-8"));
