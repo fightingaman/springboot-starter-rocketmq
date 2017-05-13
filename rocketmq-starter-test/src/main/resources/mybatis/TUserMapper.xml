@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.zzm.mapper.TUserMapper" >
+  <resultMap id="BaseResultMap" type="com.zzm.model.TUser" >
+    <id column="id" property="id" jdbcType="BIGINT" />
+    <result column="name" property="name" jdbcType="VARCHAR" />
+  </resultMap>
+  <insert id="saveTUser" parameterType="com.zzm.model.TUser">
+     INSERT INTO t_user (id,name) VALUES(#{id},#{name})
+  </insert>
+  
+</mapper>
