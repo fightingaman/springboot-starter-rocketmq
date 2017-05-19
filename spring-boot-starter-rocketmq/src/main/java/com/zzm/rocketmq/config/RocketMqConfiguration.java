@@ -1,9 +1,7 @@
 package com.zzm.rocketmq.config;
 
 import com.alibaba.rocketmq.client.consumer.DefaultMQPushConsumer;
-import com.alibaba.rocketmq.client.consumer.listener.ConsumeConcurrentlyContext;
-import com.alibaba.rocketmq.client.consumer.listener.ConsumeConcurrentlyStatus;
-import com.alibaba.rocketmq.client.consumer.listener.MessageListenerConcurrently;
+import com.alibaba.rocketmq.client.consumer.listener.*;
 import com.alibaba.rocketmq.client.exception.MQClientException;
 import com.alibaba.rocketmq.client.producer.DefaultMQProducer;
 import com.alibaba.rocketmq.client.producer.TransactionMQProducer;
@@ -81,8 +79,7 @@ public class RocketMqConfiguration {
 		consumer.setNamesrvAddr(rmqProperties.getNamesrvAddr());
 		consumer.setConsumeFromWhere(ConsumeFromWhere.CONSUME_FROM_FIRST_OFFSET);
 		consumer.setConsumeMessageBatchMaxSize(1);
-		consumer.registerMessageListener(new MessageListenerConcurrently() {
-			public ConsumeConcurrentlyStatus consumeMessage(List<MessageExt> msgs, ConsumeConcurrentlyContext context) {
+		consumer.registerMessageListener((List<MessageExt> msgs, ConsumeConcurrentlyContext context) -> {
 				MessageExt msg = msgs.get(0);
 				try {
 					publisher.publishEvent(new RocketMqEvent(msg, consumer));
@@ -94,15 +91,13 @@ public class RocketMqConfiguration {
 					}
 				}
 				return ConsumeConcurrentlyStatus.CONSUME_SUCCESS;
-			}
 		});
-		new Thread(new Runnable() {
-			@Override
-			public void run() {
+		new Thread(() -> {
 				try {
 					Thread.sleep(3000);
 					try {
 						consumer.start();
+						System.out.println("普通消费开启");
 					} catch (MQClientException e) {
 						// TODO Auto-generated catch block
 						e.printStackTrace();
@@ -110,8 +105,46 @@ public class RocketMqConfiguration {
 				} catch (InterruptedException e) {
 					e.printStackTrace();
 				}
-			}
+		}).start();
+		return consumer;
+	}
 
+	/**
+	 * 顺序消费者
+	 */
+	@Bean
+	public DefaultMQPushConsumer pushSunXunConsumer() throws MQClientException {
+		DefaultMQPushConsumer consumer = new DefaultMQPushConsumer("sunxun");
+		consumer.subscribe("stopic", "*");
+		consumer.setNamesrvAddr(rmqProperties.getNamesrvAddr());
+		consumer.setConsumeFromWhere(ConsumeFromWhere.CONSUME_FROM_FIRST_OFFSET);
+		consumer.setConsumeMessageBatchMaxSize(1);
+		consumer.registerMessageListener((List<MessageExt> msgs, ConsumeOrderlyContext context) -> {
+				MessageExt msg = msgs.get(0);
+				try {
+					publisher.publishEvent(new RocketMqEvent(msg, consumer));
+				} catch (Exception e) {
+					if (msg.getReconsumeTimes() <= 1) {
+						return ConsumeOrderlyStatus.SUCCESS;
+					} else {
+						System.out.println("定时重试！");
+					}
+				}
+				return ConsumeOrderlyStatus.SUCCESS;
+		});
+		new Thread(() ->{
+				try {
+					Thread.sleep(4000);
+					try {
+						consumer.start();
+						System.out.println("顺序消费开启");
+					} catch (MQClientException e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+					}
+				} catch (InterruptedException e) {
+					e.printStackTrace();
+				}
 		}).start();
 		return consumer;
 	}
