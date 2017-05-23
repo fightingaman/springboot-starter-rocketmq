@@ -36,7 +36,7 @@ public class ProducerController {
     public void sendMsg() throws Exception {
         for (int i = 0; i < 3; i++) {
             for (int j = 0; j < 3; j++) {
-                Message msg = new Message("stopic", "TagA", "OrderID001", (i + ":" + j).getBytes());
+                Message msg = new Message("test", "TagA", "OrderID001", (i + ":" + j).getBytes());
                 defaultProducer.send(msg, (List<MessageQueue> mqs, Message msg1, Object arg) -> {
                     // TODO Auto-generated method stub
                     int value = arg.hashCode();
@@ -88,7 +88,7 @@ public class ProducerController {
             // 发送事务消息，LocalTransactionExecute的executeLocalTransactionBranch方法中执行本地逻辑
             sendResult = sendMessageInTransaction(msg, (Message msg1, Object arg) -> {
                 int value = Integer.valueOf(arg1);
-                System.out.println("执行本地事务。。。完成");
+                System.out.println("执行本地事务(结合自身的业务逻辑)。。。完成");
                 if (value == 0) {
                     throw new RuntimeException("Could not find db");
                 } else if ((value % 5) == 0) {
@@ -155,6 +155,7 @@ public class ProducerController {
         }
 
         try {
+            //测试事务回查
             //this.endTransaction(sendResult, localTransactionState, localException);
         } catch (Exception e) {
             log.warn("local transaction execute " + localTransactionState + ", but end broker transaction failed", e);
