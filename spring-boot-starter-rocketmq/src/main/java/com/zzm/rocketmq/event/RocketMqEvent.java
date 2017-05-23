@@ -1,8 +1,8 @@
 package com.zzm.rocketmq.event;
 
 
-import com.alibaba.rocketmq.client.consumer.DefaultMQPushConsumer;
-import com.alibaba.rocketmq.common.message.MessageExt;
+import org.apache.rocketmq.client.consumer.DefaultMQPushConsumer;
+import org.apache.rocketmq.common.message.MessageExt;
 import org.springframework.context.ApplicationEvent;
 
 /**

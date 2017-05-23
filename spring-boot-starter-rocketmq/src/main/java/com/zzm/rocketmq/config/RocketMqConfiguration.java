@@ -1,14 +1,20 @@
 package com.zzm.rocketmq.config;
 
-import com.alibaba.rocketmq.client.consumer.DefaultMQPushConsumer;
-import com.alibaba.rocketmq.client.consumer.listener.*;
-import com.alibaba.rocketmq.client.exception.MQClientException;
-import com.alibaba.rocketmq.client.producer.DefaultMQProducer;
-import com.alibaba.rocketmq.client.producer.TransactionMQProducer;
-import com.alibaba.rocketmq.common.consumer.ConsumeFromWhere;
-import com.alibaba.rocketmq.common.message.MessageExt;
+
 import com.zzm.rocketmq.event.RocketMqEvent;
 
+import org.apache.rocketmq.client.consumer.DefaultMQPushConsumer;
+import org.apache.rocketmq.client.consumer.listener.ConsumeConcurrentlyContext;
+import org.apache.rocketmq.client.consumer.listener.ConsumeConcurrentlyStatus;
+import org.apache.rocketmq.client.consumer.listener.ConsumeOrderlyContext;
+import org.apache.rocketmq.client.consumer.listener.ConsumeOrderlyStatus;
+import org.apache.rocketmq.client.exception.MQClientException;
+import org.apache.rocketmq.client.producer.DefaultMQProducer;
+import org.apache.rocketmq.client.producer.LocalTransactionState;
+import org.apache.rocketmq.client.producer.TransactionCheckListener;
+import org.apache.rocketmq.client.producer.TransactionMQProducer;
+import org.apache.rocketmq.common.consumer.ConsumeFromWhere;
+import org.apache.rocketmq.common.message.MessageExt;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.ApplicationEventPublisher;
@@ -55,10 +61,14 @@ public class RocketMqConfiguration {
 		TransactionMQProducer producer = new TransactionMQProducer("TransactionProducerGroupName");
 		producer.setNamesrvAddr(rmqProperties.getNamesrvAddr());
 		producer.setInstanceName(rmqProperties.getInstanceName());
+		producer.setTransactionCheckListener((MessageExt msg) ->{
+			System.out.println("事务回查机制！");
+			return  LocalTransactionState.COMMIT_MESSAGE;
+		});
 		// 事务回查最小并发数
 		producer.setCheckThreadPoolMinSize(2);
 		// 事务回查最大并发数
-		producer.setCheckThreadPoolMaxSize(2);
+		producer.setCheckThreadPoolMaxSize(5);
 		// 队列数
 		producer.setCheckRequestHoldMax(2000);
 		producer.start();
