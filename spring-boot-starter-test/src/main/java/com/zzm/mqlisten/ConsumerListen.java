@@ -1,18 +1,15 @@
 package com.zzm.mqlisten;
 
-import com.alibaba.rocketmq.client.consumer.DefaultMQPushConsumer;
-import com.alibaba.rocketmq.client.exception.MQBrokerException;
-import com.alibaba.rocketmq.client.exception.MQClientException;
-import com.alibaba.rocketmq.remoting.exception.RemotingException;
 import com.zzm.model.TUser;
 import com.zzm.rocketmq.event.RocketMqEvent;
 import com.zzm.service.TUserService;
+import org.apache.rocketmq.client.consumer.DefaultMQPushConsumer;
+import org.apache.rocketmq.client.exception.MQBrokerException;
+import org.apache.rocketmq.client.exception.MQClientException;
+import org.apache.rocketmq.remoting.exception.RemotingException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.event.EventListener;
-import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
-
-import java.util.concurrent.locks.ReentrantLock;
 
 /**
  * @Author:钟志苗
@@ -25,7 +22,6 @@ public class ConsumerListen {
 	@Autowired
 	private TUserService tUserService;
 
-	@Async
 	@EventListener(condition = "#event.topic=='test'")
 	public void testListen(RocketMqEvent event) {
 		DefaultMQPushConsumer consumer = event.getConsumer();
@@ -49,12 +45,11 @@ public class ConsumerListen {
 			}
 		}
 	}
-	@Async
-	@EventListener(condition = "#event.topic=='pro'")
+
+	@EventListener(condition = "#event.topic=='stopic'")
 	public void normalListen(RocketMqEvent event) {
-		DefaultMQPushConsumer consumer = event.getConsumer();
 		try {
-			System.out.println("tag筛选：" + new String(event.getMessageExt().getBody(),"utf-8"));
+			System.out.println("顺序消息：" + new String(event.getMessageExt().getBody(),"utf-8"));
 		}catch (Exception e){
 			e.printStackTrace();
 		}
