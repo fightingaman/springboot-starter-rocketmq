@@ -11,7 +11,6 @@ import org.apache.rocketmq.client.consumer.listener.ConsumeOrderlyStatus;
 import org.apache.rocketmq.client.exception.MQClientException;
 import org.apache.rocketmq.client.producer.DefaultMQProducer;
 import org.apache.rocketmq.client.producer.LocalTransactionState;
-import org.apache.rocketmq.client.producer.TransactionCheckListener;
 import org.apache.rocketmq.client.producer.TransactionMQProducer;
 import org.apache.rocketmq.common.consumer.ConsumeFromWhere;
 import org.apache.rocketmq.common.message.MessageExt;
@@ -44,7 +43,7 @@ public class RocketMqConfiguration {
 	 */
 	@Bean(name = "default")
 	public DefaultMQProducer defaultMQProducer() throws MQClientException {
-		DefaultMQProducer producer = new DefaultMQProducer(rmqProperties.getProducer());
+		DefaultMQProducer producer = new DefaultMQProducer(rmqProperties.getDefaultProducer());
 		producer.setNamesrvAddr(rmqProperties.getNamesrvAddr());
 		producer.setInstanceName(rmqProperties.getInstanceName());
 		producer.setVipChannelEnabled(false);
@@ -58,7 +57,7 @@ public class RocketMqConfiguration {
 	 */
 	@Bean(name = "trans")
 	public TransactionMQProducer transactionMQProducer() throws MQClientException {
-		TransactionMQProducer producer = new TransactionMQProducer("TransactionProducerGroupName");
+		TransactionMQProducer producer = new TransactionMQProducer(rmqProperties.getTransactionProducer());
 		producer.setNamesrvAddr(rmqProperties.getNamesrvAddr());
 		producer.setInstanceName(rmqProperties.getInstanceName());
 		producer.setTransactionCheckListener((MessageExt msg) ->{
@@ -81,8 +80,8 @@ public class RocketMqConfiguration {
 	 */
 	@Bean
 	public DefaultMQPushConsumer pushConsumer() throws MQClientException {
-		DefaultMQPushConsumer consumer = new DefaultMQPushConsumer(rmqProperties.getConsumer());
-		Set<String> setTopic = rmqProperties.getTopic();
+		DefaultMQPushConsumer consumer = new DefaultMQPushConsumer(rmqProperties.getDefaultConsumer());
+		Set<String> setTopic = rmqProperties.getDefaultTopic();
 		for (String topic : setTopic) {
 			consumer.subscribe(topic, "*");
 		}
@@ -123,9 +122,12 @@ public class RocketMqConfiguration {
 	 * 顺序消费者
 	 */
 	@Bean
-	public DefaultMQPushConsumer pushSunXunConsumer() throws MQClientException {
-		DefaultMQPushConsumer consumer = new DefaultMQPushConsumer("sunxun");
-		consumer.subscribe("stopic", "*");
+	public DefaultMQPushConsumer pushOrderConsumer() throws MQClientException {
+		DefaultMQPushConsumer consumer = new DefaultMQPushConsumer(rmqProperties.getOrderConsumer());
+		Set<String> setTopic = rmqProperties.getOrderTopic();
+		for (String topic : setTopic) {
+			consumer.subscribe(topic, "*");
+		}
 		consumer.setNamesrvAddr(rmqProperties.getNamesrvAddr());
 		consumer.setConsumeFromWhere(ConsumeFromWhere.CONSUME_FROM_FIRST_OFFSET);
 		consumer.setConsumeMessageBatchMaxSize(1);
@@ -144,7 +146,7 @@ public class RocketMqConfiguration {
 		});
 		new Thread(() ->{
 				try {
-					Thread.sleep(4000);
+					Thread.sleep(3000);
 					try {
 						consumer.start();
 						System.out.println("顺序消费开启");

@@ -6,12 +6,11 @@
 	<artifactId>spring-boot-starter-rocketmq</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
 	<name>spring-boot-starter-rocketmq</name>
-	<description>Starter for using RocketMQ</description>
+	<description>rocketMQ</description>
 	<parent>
 		<groupId>org.springframework.boot</groupId>
 		<artifactId>spring-boot-starter-parent</artifactId>
 		<version>1.5.2.RELEASE</version>
-		<relativePath />
 	</parent>
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
