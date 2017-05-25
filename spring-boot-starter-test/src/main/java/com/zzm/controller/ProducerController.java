@@ -32,11 +32,15 @@ public class ProducerController {
     @Autowired
     private TransactionMQProducer transactionProducer;
 
+    /**
+     * 顺序消息
+     * @throws Exception
+     */
     @RequestMapping(value = "/sendMsg", method = RequestMethod.GET)
     public void sendMsg() throws Exception {
         for (int i = 0; i < 3; i++) {
             for (int j = 0; j < 3; j++) {
-                Message msg = new Message("test", "TagA", "OrderID001", (i + ":" + j).getBytes());
+                Message msg = new Message("order", "TagA", "OrderID11113", (i + ":" + j).getBytes());
                 defaultProducer.send(msg, (List<MessageQueue> mqs, Message msg1, Object arg) -> {
                     // TODO Auto-generated method stub
                     int value = arg.hashCode();
@@ -52,6 +56,14 @@ public class ProducerController {
 
     }
 
+    /**
+     * 普通消息
+     * @param tag
+     * @param body
+     * @param total
+     * @return
+     * @throws Exception
+     */
     @RequestMapping("/rocketMq/{tag}/{body}/{total}")
     @ResponseBody
     public String rocketMq(@PathVariable String tag, @PathVariable String body, @PathVariable Integer total)
@@ -62,9 +74,9 @@ public class ProducerController {
         for (int i = 1; i < total + 1; i++) {
             Message msg = new Message("test", // topic
                     tag, // tag
-                    "OrderID188", // key
+                    "OrderID11112", // key
                     (i + "").getBytes(RemotingHelper.DEFAULT_CHARSET));// body
-            sendResult = defaultProducer.send(msg);
+            sendResult = defaultProducer.send(msg);//同步发送
             if (sendResult.getSendStatus().name().equals(SendStatus.SEND_OK.name())) {
                 fail++;
             } else {
@@ -82,12 +94,11 @@ public class ProducerController {
             // 构造消息
             Message msg = new Message("test", // topic
                     "TagA", // tag
-                    "OrderID001", // key
+                    "OrderID11111", // key
                     id.getBytes());// body
-
             // 发送事务消息，LocalTransactionExecute的executeLocalTransactionBranch方法中执行本地逻辑
             sendResult = sendMessageInTransaction(msg, (Message msg1, Object arg) -> {
-                int value = Integer.valueOf(arg1);
+                int value = Integer.valueOf(arg.toString());
                 System.out.println("执行本地事务(结合自身的业务逻辑)。。。完成");
                 if (value == 0) {
                     throw new RuntimeException("Could not find db");
@@ -97,7 +108,7 @@ public class ProducerController {
                     return LocalTransactionState.COMMIT_MESSAGE;
                 }
                 return LocalTransactionState.ROLLBACK_MESSAGE;
-            }, 4);
+            }, arg1);
             System.out.println(sendResult);
         } catch (Exception e) {
             e.printStackTrace();
@@ -105,6 +116,15 @@ public class ProducerController {
         return sendResult.toString();
     }
 
+    /**
+     * 模拟无法发送事务确认（测试事务回查）
+     *
+     * @param msg
+     * @param tranExecuter
+     * @param arg
+     * @return
+     * @throws MQClientException
+     */
     public TransactionSendResult sendMessageInTransaction(final Message msg, final LocalTransactionExecuter tranExecuter, final Object arg)
             throws MQClientException {
         if (null == tranExecuter) {
@@ -120,9 +140,7 @@ public class ProducerController {
         } catch (Exception e) {
             throw new MQClientException("send message Exception", e);
         }
-
         LocalTransactionState localTransactionState = LocalTransactionState.UNKNOW;
-        Throwable localException = null;
         switch (sendResult.getSendStatus()) {
             case SEND_OK: {
                 try {
@@ -141,7 +159,6 @@ public class ProducerController {
                 } catch (Throwable e) {
                     log.info("executeLocalTransactionBranch exception", e);
                     log.info(msg.toString());
-                    localException = e;
                 }
             }
             break;
@@ -153,14 +170,8 @@ public class ProducerController {
             default:
                 break;
         }
-
-        try {
-            //测试事务回查
-            //this.endTransaction(sendResult, localTransactionState, localException);
-        } catch (Exception e) {
-            log.warn("local transaction execute " + localTransactionState + ", but end broker transaction failed", e);
-        }
-
+        //测试事务回查
+        //this.endTransaction(sendResult, localTransactionState, localException);
         TransactionSendResult transactionSendResult = new TransactionSendResult();
         transactionSendResult.setSendStatus(sendResult.getSendStatus());
         transactionSendResult.setMessageQueue(sendResult.getMessageQueue());
