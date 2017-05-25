@@ -46,7 +46,7 @@ public class ConsumerListen {
 		}
 	}
 
-	@EventListener(condition = "#event.topic=='stopic'")
+	@EventListener(condition = "#event.topic=='order'")
 	public void normalListen(RocketMqEvent event) {
 		try {
 			System.out.println("顺序消息：" + new String(event.getMessageExt().getBody(),"utf-8"));
