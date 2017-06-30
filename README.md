@@ -8,6 +8,7 @@ spring boot 集成 RocketMq消息中间件
 
 ### Shutdown broker
   sh mqshutdown broker
+  sh mqadmin wipeWritePerm -b brokerN -n namesrvA（建议使用这种）
 
 ### Start Nameserver
 * Unix platform
